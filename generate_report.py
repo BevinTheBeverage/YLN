@@ -95,7 +95,7 @@ def add_hyperlink(paragraph, url, text):
     return hyperlink
 
 # set the specs for a style
-def set_style(document, style_name, font_name='Times New Roman', color = (0x0, 0x0, 0x0), size=12, alignment=WD_ALIGN_PARAGRAPH.LEFT, bold=False, italic=False, indent = 0, space_after = 0, type="paragraph"):
+def set_style(document, style_name, font_name='Times New Roman', color = (0x0, 0x0, 0x0), size=12, alignment=WD_ALIGN_PARAGRAPH.LEFT, bold=False, italic=False, indent = 0.0, space_after = 0, type="paragraph"):
     style = document.styles[style_name]
     font = style.font
     font.name = font_name
@@ -126,13 +126,15 @@ def set_doc_styles(doc):
     set_style(doc, 'Heading 4', bold = True, indent=0.5)
     return doc
 
-# search the queries for a topic and 
+# search the queries for a topic and
 def type_topic(doc, topics, topic, pages):
     doc.add_heading(topic, 2)
     result_num = 0
     for subtopic in topics[topic]:
+        print(f"Searching for subtopic: {topic if len(subtopic) == 0 else subtopic}...")
         doc.add_heading(topic if len(subtopic) == 0 else subtopic, 3)
         for page in range(1, pages+1):
+            print(f"Scanning page {page}...")
             # get search results for that page for that topic
             search_results = search(f"{topic} {subtopic}", page, days=2)
             for i, search_item in enumerate(search_results, start=1):
@@ -159,9 +161,10 @@ if __name__ == '__main__':
         'Jo Anne Simon': ['']
     }
 
-    pages = 1
+    pages = 2
 
     for topic in topics.keys():
+        print(f"Searching for topic: {topic}...")
         type_topic(doc, topics, topic, pages)
 
     doc.save('reports/'+date.today().strftime("%b_%d_%Y")+'_Report.docx')

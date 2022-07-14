@@ -18,6 +18,8 @@ def search(query, page=1, days=2):
 
     data = requests.get(url).json()
 
+    print("Search complete.")
+
     # get the result items
     return data.get("items")
 
@@ -26,7 +28,7 @@ def download_list(list, fname):
         pickle.dump(list, fp)
 
 if __name__ == "__main__":
-    # queries = ["Yuh-Line Niou", 
+    # queries = ["Yuh-Line Niou",
     #         "Bill de Blasio",
     #         "Mondaire Jones",
     #         "Carlina Rivera",
