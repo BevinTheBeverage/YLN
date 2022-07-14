@@ -31,22 +31,26 @@ title.grid(row=0, column=1, ipadx=10, ipady=10)
 topics_label = Label(root, text='Topics', font=('Times New Roman', 20))
 topics_label.grid(row=1, column=1, ipadx=10, ipady=10)
 
+topic_entries = []
+
+def add_topic(text=None):
+    topic = (Topic(text))
+    topic_entries.append(topic)
+    topic.grid(c = 0, r = len(topic_entries)+3)
+    add_topic_btn.pack_forget()
+    add_topic_btn.grid(column=1, row=len(topic_entries)+5)
+
+add_topic_btn = Button(root, text= "Add Topic", font=('Times New Roman', 14), command=add_topic)
+
 default_topics = [
         'Yuh-Line Niou',
         'Bill de Blasio'
     ]
-
-topic_entries = []
-
-def add_topic(text):
-    topic_entries.append(Topic(text))
 
 for default_topic in default_topics:
     add_topic(default_topic)
 
 for i, topic in enumerate(topic_entries):
     topic.grid(c = 0, r = i+3)
-
-add_topic_btn = Button(root, text= "Add Topic", font=('Times New Roman', 14), command=add_topic)
 
 root.mainloop()
