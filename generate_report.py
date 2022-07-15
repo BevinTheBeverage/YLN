@@ -127,16 +127,22 @@ def set_doc_styles(doc):
     return doc
 
 # search the queries for a topic and
-def type_topic(doc, topics, topic, pages):
+def type_topic(doc, topics, topic, pages, days=2, status_label=None):
     doc.add_heading(topic, 2)
     result_num = 0
     for subtopic in topics[topic]:
-        print(f"Searching for subtopic: {topic if len(subtopic) == 0 else subtopic}...")
+        if status_label:
+            status_label.configure(text=f"{status_label.cget('text')}\nSearching for subtopic: {topic if len(subtopic) == 0 else subtopic}...")
+        else:
+            print(f"Searching for subtopic: {topic if len(subtopic) == 0 else subtopic}...")
         doc.add_heading(topic if len(subtopic) == 0 else subtopic, 3)
-        for page in range(1, pages+1):
-            print(f"Scanning page {page}...")
+        for page in range(1, int(pages+1)):
+            if status_label:
+                status_label.configure(text=f"{status_label.cget('text')}\nScanning page {page}...")
+            else:
+                print(f"Scanning page {page}...")
             # get search results for that page for that topic
-            search_results = search(f"{topic} {subtopic}", page, days=2)
+            search_results = search(f"{topic} {subtopic}", page, days)
             for i, search_item in enumerate(search_results, start=1):
                 result_num += 1
                 title, data, org_name = collect_data(search_item)
@@ -165,8 +171,23 @@ if __name__ == '__main__':
 
     for topic in topics.keys():
         print(f"Searching for topic: {topic}...")
-        type_topic(doc, topics, topic, pages)
+        type_topic(doc, topics, topic, pages, days=2)
 
     doc.save('reports/'+date.today().strftime("%b_%d_%Y")+'_Report.docx')
 
     print("Report generation successful.")
+
+def generate_report(status_label, topics, pages, num_days):
+    doc = Document()
+
+    set_doc_styles(doc)
+
+    heading = doc.add_heading(date.today().strftime("%B %d, %Y"), 1)
+
+    for topic in topics.keys():
+        status_label.configure(text=f"{status_label.cget('text')}\nSearching for topic: {topic}...")
+        type_topic(doc, topics, topic, pages, days=num_days, status_label=status_label)
+
+    doc.save('reports/'+date.today().strftime("%b_%d_%Y")+'_Report.docx')
+
+    status_label.configure(text=f"{status_label.cget('text')}\nReport generation successful.")
