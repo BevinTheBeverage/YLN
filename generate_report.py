@@ -168,3 +168,5 @@ if __name__ == '__main__':
         type_topic(doc, topics, topic, pages)
 
     doc.save('reports/'+date.today().strftime("%b_%d_%Y")+'_Report.docx')
+
+    print("Report generation successful.")
