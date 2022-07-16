@@ -7,6 +7,8 @@ from datetime import date
 import pickle
 from docx.oxml.ns import qn
 from query import search
+from tkinter import *
+import os
 
 # function to get the site name via the url
 def get_site_name(url):
@@ -27,6 +29,10 @@ def get_site_name(url):
             break
 
     return url
+
+def update_status(root, status_label, text):
+    status_label.configure(text=f"{status_label.cget('text')}\n{text}")
+    root.update()
 
 # function to type out the data for a search item
 def type_article_data(doc, data):
@@ -126,30 +132,43 @@ def set_doc_styles(doc):
     set_style(doc, 'Heading 4', bold = True, indent=0.5)
     return doc
 
-# search the queries for a topic and
-def type_topic(doc, topics, topic, pages, days=2, status_label=None):
+# search the queries for a topic
+def type_topic(doc, topics, topic, pages, days=2, status_label=None, root=None):
     doc.add_heading(topic, 2)
     result_num = 0
     for subtopic in topics[topic]:
         if status_label:
-            status_label.configure(text=f"{status_label.cget('text')}\nSearching for subtopic: {topic if len(subtopic) == 0 else subtopic}...")
+            update_status(root, status_label, f"Searching for subtopic: {topic if len(subtopic) == 0 else subtopic}...")
         else:
             print(f"Searching for subtopic: {topic if len(subtopic) == 0 else subtopic}...")
         doc.add_heading(topic if len(subtopic) == 0 else subtopic, 3)
         for page in range(1, int(pages+1)):
             if status_label:
-                status_label.configure(text=f"{status_label.cget('text')}\nScanning page {page}...")
+                update_status(root, status_label, f"Scanning page {page}...")
             else:
                 print(f"Scanning page {page}...")
             # get search results for that page for that topic
-            search_results = search(f"{topic} {subtopic}", page, days)
-            for i, search_item in enumerate(search_results, start=1):
-                result_num += 1
-                title, data, org_name = collect_data(search_item)
-                paragraph = doc.add_heading(f"{org_name}: ", 4)
-                title_run = paragraph.add_run(title)
-                title_run.font.italic = True
-                type_article_data(doc, data)
+            try: 
+                search_results = search(f"{topic} {subtopic}", page, days)
+                if search_results != None:          
+                    for i, search_item in enumerate(search_results, start=1):
+                        result_num += 1
+                        title, data, org_name = collect_data(search_item)
+                        paragraph = doc.add_heading(f"{org_name}: ", 4)
+                        title_run = paragraph.add_run(title)
+                        title_run.font.italic = True
+                        type_article_data(doc, data)
+                    if status_label:
+                        update_status(root, status_label, 'Search complete.')
+                else:
+                    if status_label:
+                        update_status(root, status_label, f"No results found for page {page} of subtopic {subtopic if len(subtopic) != 0 else topic} in topic {topic}.")
+                    else:
+                        print(f"No results found for page {page} of subtopic {subtopic} in topic {topic}.") 
+            except Exception as ex:
+                if type(ex).__name__ == 'QuotaExceeded' and status_label:
+                    update_status(root, status_label, 'Daily quota exceeded. Contact Kevin for more information.')        
+                    raise ex       
 
 if __name__ == '__main__':
     doc = Document()
@@ -177,7 +196,7 @@ if __name__ == '__main__':
 
     print("Report generation successful.")
 
-def generate_report(status_label, topics, pages, num_days):
+def generate_report(status_label, root, topics, pages, num_days):
     doc = Document()
 
     set_doc_styles(doc)
@@ -185,9 +204,13 @@ def generate_report(status_label, topics, pages, num_days):
     heading = doc.add_heading(date.today().strftime("%B %d, %Y"), 1)
 
     for topic in topics.keys():
-        status_label.configure(text=f"{status_label.cget('text')}\nSearching for topic: {topic}...")
-        type_topic(doc, topics, topic, pages, days=num_days, status_label=status_label)
+        result = update_status(root, status_label, f"Searching for topic: {topic}...")
+        result = type_topic(doc, topics, topic, pages, days=num_days, status_label=status_label, root=root)
 
-    doc.save('reports/'+date.today().strftime("%b_%d_%Y")+'_Report.docx')
+    try: 
+        doc.save('reports/'+date.today().strftime("%b_%d_%Y")+'_Report.docx')
+    except FileNotFoundError:
+        os.system("mkdir reports")
+        update_status(root, status_label, f"Reports folder not found. Creating new folder.")
 
-    status_label.configure(text=f"{status_label.cget('text')}\nReport generation successful.")
+    return 'reports/'+date.today().strftime("%b_%d_%Y")+'_Report.docx'

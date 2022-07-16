@@ -3,6 +3,9 @@ from docx import Document
 from docx.shared import Inches
 import pickle
 
+class QuotaExceeded(Exception):
+    pass
+
 def search(query, page=1, days=2):
     API_KEY = "AIzaSyDrW-yFozgpkEgAs48kwq7h37X_m6vFOAg"
 
@@ -18,7 +21,8 @@ def search(query, page=1, days=2):
 
     data = requests.get(url).json()
 
-    print("Search complete.")
+    if data.get('error') != None and data.get('error').get('code')==429:
+        raise QuotaExceeded()
 
     # get the result items
     return data.get("items")

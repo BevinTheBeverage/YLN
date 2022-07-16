@@ -1,8 +1,9 @@
 # ADD SLIDER FOR NUMBER OF RESULTS WITH TICKINTERVAL 10: https://python-course.eu/tkinter/sliders-in-tkinter.php
 
 from tkinter import *
-from generate_report import generate_report
-# from PIL import Image
+from generate_report import generate_report, update_status
+from PIL import Image
+import os
 
 TOPIC_ENTRY_WIDTH = 3
 
@@ -16,15 +17,14 @@ class Topic:
         self.topic_entries = topic_entries
         if(text):
             self.set_text(self.topic_entry, text)
-        # self.icon = PhotoImage(file='plus.png').subsample(25, 25)
+        self.icon = PhotoImage(file='plus.png').subsample(25, 25)
         self.expand_btn = Button(root,
-        #image=self.icon,
-        text="+",
+        image=self.icon,
         command=lambda: self.toggle_subtopics(self.topic_entries),
         #width=15, height=15
         )
         self.subtopics = subtopics
-        self.subtopics_label = Label(root, text='Subtopics (Optional)', font=('Times New Roman', 16), bg=BG_COLOR)
+        self.subtopics_label = Label(root, text='Subtopics (Optional)', font=('Times New Roman', 14), bg=BG_COLOR)
         self.add_subtopics_btn = Button(root, text= "   Add Subtopic   ", font=('Times New Roman', 14), command=self.add_subtopic)
         self.del_subtopics_btn = Button(root, text= "Remove Subtopic", font=('Times New Roman', 14), command=self.remove_subtopic)
         self.subtopics_shown = False
@@ -51,7 +51,7 @@ class Topic:
         else:
             for topic in topic_entries:
                 if topic.subtopics_shown:
-                    topic.toggle_subtopics()
+                    topic.toggle_subtopics(topic_entries)
             for i, entry in enumerate(self.subtopic_entries):
                 entry.grid(row=self.row+i+2, column=1, columnspan=2, pady=5)
             self.subtopics_label.grid(row=self.row+1, column=0, columnspan=4, pady=(10, 0))
@@ -107,13 +107,10 @@ def delete_topic(add_topic_btn, delete_topic_btn, continue_btn, topic_entries):
         topic.delete()
         refresh_buttons(add_topic_btn, delete_topic_btn, continue_btn, topic_entries)
 
-# initialize tkinter
-root = Tk()
-root.title("Press Clips Reporter")
-root.resizable(False, False)
-root.config(bg=BG_COLOR)
-
 def first_page():
+    for widgets in root.winfo_children():
+        widgets.destroy()
+
     title = Label(root, text='Press Clips Reporter', font=('Times New Roman', 24), bg=BG_COLOR)
     title.grid(row=0, column=0, columnspan=4, padx = 10, pady= 10)
 
@@ -126,8 +123,9 @@ def first_page():
         topics = {}
         for topic in topic_entries:
             key = topic.topic_entry.get()
-            subtopics = [''] + list(filter(lambda text: len(text) != 0, [subtopic.get() for subtopic in topic.subtopic_entries]))
-            topics[key] = subtopics
+            if len(key) != 0:
+                subtopics = [''] + list(filter(lambda text: len(text) != 0, [subtopic.get() for subtopic in topic.subtopic_entries]))
+                topics[key] = subtopics
         for widgets in root.winfo_children():
             widgets.destroy()
         second_page(topics)
@@ -136,8 +134,8 @@ def first_page():
     delete_topic_btn = Button(root, text= "Remove Topic", font=('Times New Roman', 14), command=lambda: delete_topic(add_topic_btn, delete_topic_btn, continue_btn, topic_entries))
     continue_btn = Button(root, text= "Continue", font=('Times New Roman', 18), command=next_page)
 
-    default_topics = {"Yuh-Line Niou": ['BDS', 'Garbo'],
-                "Bill de Blasio": ['Yes', 'No'],
+    default_topics = {"Yuh-Line Niou": ['BDS'],
+                "Bill de Blasio": [''],
                 "Mondaire Jones": [''],
                 "Carlina Rivera": [''],
                 "Dan Goldman": [''],
@@ -147,7 +145,7 @@ def first_page():
         add_topic(add_topic_btn, delete_topic_btn, continue_btn, topic_entries, default_topic, default_topics[default_topic])
 
 def second_page(topics):
-    title = Label(root, text='Press Clips Reporter', font=('Times New Roman', 24))
+    title = Label(root, text='Press Clips Reporter', font=('Times New Roman', 24), bg=BG_COLOR)
     title.grid(row=0, column=0, padx=10, pady= 10)
 
     topics_and_subtopics_heading = "Topics and Subtopics:"
@@ -161,39 +159,59 @@ def second_page(topics):
             subtopicsList += subtopic
         topics_and_subtopics_display += f"{k}:\t{subtopicsList}\n" if len(subtopicsList) != 0 else f"{k}\n"
 
-    topics_and_subtopics_heading_label = Label(root, text=topics_and_subtopics_heading, font=('Times New Roman', 16, 'bold'), )
+    topics_and_subtopics_heading_label = Label(root, text=topics_and_subtopics_heading, font=('Times New Roman', 16, 'bold'), bg=BG_COLOR)
     topics_and_subtopics_heading_label.grid(row=1, column=0)
-    topics_and_subtopics_display_label = Label(root, text=topics_and_subtopics_display, font=('Times New Roman', 14), justify='left', )
+    topics_and_subtopics_display_label = Label(root, text=topics_and_subtopics_display, font=('Times New Roman', 14), justify='left', bg=BG_COLOR)
     topics_and_subtopics_display_label.grid(row=2, column=0)
 
-    results_slider_label = Label(root, text="Number of results per subtopic:", justify=CENTER, font=('Times New Roman', 14))
+    results_slider_label = Label(root, text="Number of results per subtopic:", justify=CENTER, font=('Times New Roman', 14), bg=BG_COLOR)
     results_slider_label.grid(row=3, column=0)
 
-    results_slider = Scale(root, from_=10, to=100, resolution=10, tickinterval=30, font=('Times New Roman', 14), orient=HORIZONTAL, length=210)
+    results_slider = Scale(root, from_=10, to=100, resolution=10, tickinterval=30, font=('Times New Roman', 14), orient=HORIZONTAL, length=210, bg=BG_COLOR, highlightthickness=0)
     results_slider.set(10)
     results_slider.grid(row=4, column=0)
 
-    days_slider_label = Label(root, text="Days to search from:", justify=CENTER, font=('Times New Roman', 14))
+    days_slider_label = Label(root, text="Days to search from:", justify=CENTER, font=('Times New Roman', 14), bg=BG_COLOR)
     days_slider_label.grid(row=5, column=0, pady=(10, 0))
 
-    days_slider = Scale(root, from_=1, to=7, tickinterval=1, font=('Times New Roman', 14), orient=HORIZONTAL, length=210)
+    days_slider = Scale(root, from_=1, to=7, tickinterval=1, font=('Times New Roman', 14), orient=HORIZONTAL, length=210, bg=BG_COLOR, highlightthickness=0)
     days_slider.set(2)
     days_slider.grid(row=6, column=0)
 
     generate_btn = Button(root, text= "Generate Report", font=('Times New Roman', 14), command=lambda: third_page(topics, int(results_slider.get())/10, days_slider.get()))
-    generate_btn.grid(row=7, column=0)
+    generate_btn.grid(row=7, column=0, pady=10)
 
 def third_page(topics, pages, days):
     for widgets in root.winfo_children():
       widgets.destroy()
 
-    title = Label(root, text='Press Clips Reporter', font=('Times New Roman', 24))
+    title = Label(root, text='Press Clips Reporter', font=('Times New Roman', 24), bg=BG_COLOR)
     title.grid(row=0, column=0, padx=10, pady= 10)
 
-    status_label = Label(root, text="Generating report...", font=('Times New Roman', 14), justify='left', )
+    status_label = Label(root, text="Generating report...", font=('Times New Roman', 14), justify='left', bg=BG_COLOR)
     status_label.grid(row=1, column=0)
 
-    generate_report(status_label, topics, pages, days)
+    # generate_report(status_label, root, topics, pages, days)
 
-first_page()
-root.mainloop()
+    try:
+        filename = generate_report(status_label, root, topics, pages, days)
+        open_btn = Button(root, text= "Open Reports Folder", font=('Times New Roman', 14), command=lambda: os.system("explorer.exe reports"))
+        open_btn.grid(row=2, column=0, pady=10)
+    except Exception as ex:
+        if type(ex).__name__ != 'QuotaExceeded':
+            template = "Report generation failed.\nAn exception of type {0} occurred.\nArguments:{1!r}.\nPlease contact Kevin with this information."
+            message = template.format(type(ex).__name__, ex.args)
+            update_status(root, status_label, message)
+        
+    restart_btn = Button(root, text= "New Report", font=('Times New Roman', 14), command=first_page)
+    restart_btn.grid(row=3, column=0, pady=10)
+
+if __name__ == '__main__':
+    # initialize tkinter
+    root = Tk()
+    root.title("Press Clips Reporter")
+    root.resizable(False, False)
+    root.config(bg=BG_COLOR)  
+
+    first_page()
+    root.mainloop()
