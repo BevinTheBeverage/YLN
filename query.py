@@ -1,6 +1,4 @@
 import requests
-from docx import Document
-from docx.shared import Inches
 import pickle
 
 class QuotaExceeded(Exception):

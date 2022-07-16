@@ -2,13 +2,13 @@ import docx
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-import moment
 from datetime import date
 import pickle
 from docx.oxml.ns import qn
 from query import search
 from tkinter import *
 import os
+import json
 
 # function to get the site name via the url
 def get_site_name(url):
@@ -60,10 +60,15 @@ def collect_data(search_item):
         "Long Description": long_description,
         "URL": search_item.get("link"),
     }
+    with open('weirdos.json') as json_file:
+        weirdos = json.load(json_file)
     try:
         org_name = search_item['pagemap']['metatags'][0]['og:site_name']
     except:
         org_name = get_site_name(data["URL"])
+    if org_name in weirdos.keys():
+        org_name = weirdos[org_name]
+        
     return title, data, org_name
 
 # function to add a hyperlink to a paragraph

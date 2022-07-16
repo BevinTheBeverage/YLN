@@ -2,7 +2,6 @@
 
 from tkinter import *
 from generate_report import generate_report, update_status
-from PIL import Image
 import os
 
 TOPIC_ENTRY_WIDTH = 3
@@ -21,7 +20,7 @@ class Topic:
         self.expand_btn = Button(root,
         image=self.icon,
         command=lambda: self.toggle_subtopics(self.topic_entries),
-        #width=15, height=15
+        width=16, height=16
         )
         self.subtopics = subtopics
         self.subtopics_label = Label(root, text='Subtopics (Optional)', font=('Times New Roman', 14), bg=BG_COLOR)
